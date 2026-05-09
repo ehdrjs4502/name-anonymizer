@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import { AnonymizeToggle } from '@/components/AnonymizeToggle';
-import { ResetMappingButton } from '@/components/ResetMappingButton';
 import { UserList } from '@/components/UserList';
 
-export default function Home() {
+export default function TeamPage() {
   return (
     <main
       style={{
@@ -15,18 +14,16 @@ export default function Home() {
       }}
     >
       <header style={{ display: 'grid', gap: '0.5rem' }}>
-        <h1 style={{ margin: 0, fontSize: '1.75rem' }}>이름 익명화 데모</h1>
+        <h1 style={{ margin: 0, fontSize: '1.75rem' }}>팀 페이지</h1>
         <p style={{ margin: 0, color: '#666' }}>
-          토글을 누르면 같은 이름이 항상 같은 익명으로 변환됩니다. 다른 탭에서도
-          즉시 동기화됩니다.
+          홈에서 매핑된 익명이 그대로 유지되는 걸 확인하세요.
         </p>
       </header>
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         <AnonymizeToggle />
-        <ResetMappingButton />
         <Link
-          href="/team"
+          href="/"
           style={{
             padding: '0.5rem 1rem',
             borderRadius: '0.5rem',
@@ -36,14 +33,11 @@ export default function Home() {
             fontSize: '0.95rem',
           }}
         >
-          팀 페이지로 이동 →
+          ← 홈으로
         </Link>
       </div>
 
-      <section>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>사용자 목록</h2>
-        <UserList />
-      </section>
+      <UserList />
     </main>
   );
 }
