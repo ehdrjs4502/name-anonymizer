@@ -12,17 +12,19 @@ import { getMap, setMap, getSalt, setSalt, subscribeStorage, STORAGE_KEYS } from
  */
 export class Anonymizer {
   private readonly pool: readonly string[];
+  private readonly excludes: ReadonlySet<string>;
   private map: Record<string, string>;
   private salt: number;
   private readonly listeners: Set<() => void> = new Set();
   private unsubscribeStorage: (() => void) | null = null;
   private version = 0;
 
-  constructor(pool: readonly string[]) {
+  constructor(pool: readonly string[], excludes: readonly string[] = []) {
     if (!pool || pool.length === 0) {
       throw new Error('[Anonymizer] pool은 비어있을 수 없습니다');
     }
     this.pool = [...pool];
+    this.excludes = new Set(excludes);
     this.map = getMap();
     this.salt = getSalt();
 
@@ -46,6 +48,7 @@ export class Anonymizer {
    */
   anonymize(name: string): string {
     if (!name) return name;
+    if (this.excludes.has(name)) return name;
     const cached = this.map[name];
     if (cached !== undefined) return cached;
 

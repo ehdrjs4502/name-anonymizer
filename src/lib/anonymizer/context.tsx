@@ -24,13 +24,15 @@ const AnonymizerContext = createContext<AnonymizerContextValue | null>(null);
  */
 export function AnonymizerProvider({
   pool,
+  excludes = [],
   children,
 }: {
   pool: readonly string[];
+  excludes?: readonly string[];
   children: React.ReactNode;
 }) {
   // useState의 lazy initializer로 한 번만 생성. 렌더 중 ref.current 접근 문제를 피한다.
-  const [anonymizer] = useState(() => new Anonymizer(pool));
+  const [anonymizer] = useState(() => new Anonymizer(pool, excludes));
 
   // 언마운트 시 storage 구독 정리
   useEffect(() => {
