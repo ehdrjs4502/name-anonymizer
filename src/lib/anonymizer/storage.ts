@@ -9,11 +9,13 @@
 
 const MAP_KEY = 'anonymizer_map';
 const ENABLED_KEY = 'anonymizer_enabled';
+const SALT_KEY = 'anonymizer_salt';
 
 /** 외부에서 키 비교에 쓰기 좋도록 노출 */
 export const STORAGE_KEYS = {
   MAP: MAP_KEY,
   ENABLED: ENABLED_KEY,
+  SALT: SALT_KEY,
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -97,6 +99,34 @@ export function setEnabled(value: boolean): void {
 }
 
 /**
+ * reset 시 해시 기준점을 바꾸기 위한 랜덤 salt를 읽는다. 기본값 0.
+ */
+export function getSalt(): number {
+  if (!isBrowser()) return 0;
+  try {
+    const raw = window.localStorage.getItem(SALT_KEY);
+    if (!raw) return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * salt를 저장하고 같은 탭 listener에 통지한다. SSR에서는 no-op.
+ */
+export function setSalt(value: number): void {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(SALT_KEY, String(value));
+    notifyLocal(STORAGE_KEYS.SALT);
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * 익명화 관련 storage 변경을 구독한다.
  * - 같은 탭에서 setMap/setEnabled 호출 시 콜백 호출
  * - 다른 탭에서 localStorage 변경 시 `storage` 이벤트로 콜백 호출
@@ -114,7 +144,7 @@ export function subscribeStorage(callback: Listener): () => void {
   }
 
   const handler = (e: StorageEvent) => {
-    if (e.key === MAP_KEY || e.key === ENABLED_KEY) {
+    if (e.key === MAP_KEY || e.key === ENABLED_KEY || e.key === SALT_KEY) {
       callback(e.key as StorageKey);
     }
   };

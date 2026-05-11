@@ -12,3 +12,4 @@ export { Anonymizer } from './Anonymizer';
 export { AnonymizerProvider, useAnonymizer } from './context';
 export { useAnonymize } from './useAnonymize';
 export { useAnonymizerToggle } from './useAnonymizerToggle';
+    

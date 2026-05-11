@@ -1,17 +1,18 @@
 'use client';
 
-import { useAnonymizerToggle } from '@/lib/anonymizer';
+import { useAnonymizer, useAnonymizerToggle } from '@/lib/anonymizer';
 
 /**
  * 익명화 ON/OFF 토글 버튼.
  */
 export function AnonymizeToggle() {
   const { isAnonymized, toggle } = useAnonymizerToggle();
+  const { reset } = useAnonymizer();
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => { reset(); toggle(); }}
       aria-pressed={isAnonymized}
       style={{
         padding: '0.5rem 1rem',

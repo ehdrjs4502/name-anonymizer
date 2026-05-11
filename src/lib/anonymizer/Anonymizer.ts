@@ -1,5 +1,5 @@
 import { djb2 } from './hash';
-import { getMap, setMap, subscribeStorage, STORAGE_KEYS } from './storage';
+import { getMap, setMap, getSalt, setSalt, subscribeStorage, STORAGE_KEYS } from './storage';
 
 /**
  * 결정론적 이름 → 익명 매핑을 관리하는 핵심 클래스.
@@ -13,6 +13,7 @@ import { getMap, setMap, subscribeStorage, STORAGE_KEYS } from './storage';
 export class Anonymizer {
   private readonly pool: readonly string[];
   private map: Record<string, string>;
+  private salt: number;
   private readonly listeners: Set<() => void> = new Set();
   private unsubscribeStorage: (() => void) | null = null;
   private version = 0;
@@ -21,18 +22,18 @@ export class Anonymizer {
     if (!pool || pool.length === 0) {
       throw new Error('[Anonymizer] pool은 비어있을 수 없습니다');
     }
-    // 풀은 외부 변경에 영향받지 않도록 사본을 보관
     this.pool = [...pool];
     this.map = getMap();
+    this.salt = getSalt();
 
-    // localStorage 변화를 인스턴스 캐시에 반영
     this.unsubscribeStorage = subscribeStorage((key) => {
       if (key === STORAGE_KEYS.MAP) {
         this.map = getMap();
         this.bump();
+      } else if (key === STORAGE_KEYS.SALT) {
+        this.salt = getSalt();
+        this.bump();
       } else if (key === STORAGE_KEYS.ENABLED) {
-        // 토글 상태 변경은 useAnonymizerToggle이 별도로 구독한다.
-        // 여기서도 bump해 두면 useAnonymize가 매핑 구독으로도 토글 변화를 흡수할 수 있어 안전.
         this.bump();
       }
     });
@@ -49,7 +50,7 @@ export class Anonymizer {
     if (cached !== undefined) return cached;
 
     const used = new Set(Object.values(this.map));
-    const startIdx = djb2(name) % this.pool.length;
+    const startIdx = (djb2(name) + this.salt) % this.pool.length;
 
     // 1) 선형 프로빙으로 풀에서 빈 슬롯 탐색
     for (let i = 0; i < this.pool.length; i++) {
@@ -74,13 +75,12 @@ export class Anonymizer {
   }
 
   /**
-   * 모든 매핑을 지운다. localStorage에도 반영된다.
+   * 모든 매핑을 지우고 salt를 갱신한다. localStorage에도 반영된다.
    */
   reset(): void {
     this.map = {};
     setMap(this.map);
-    // setMap이 같은 탭 listener를 통해 bump를 트리거하지만,
-    // 우리도 storage 구독자라 자기 자신이 호출됨 → 안전.
+    setSalt(Math.floor(Math.random() * 1_000_000));
   }
 
   /**
